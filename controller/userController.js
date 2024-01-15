@@ -13,6 +13,7 @@ const getUsers = async (req, res, next) => {
       message: "Successfully fetched user datas.",
       data: users,
     });
+    console.log(users);
   } catch (err) {
     next(err);
   }
@@ -39,15 +40,19 @@ const postRegisterUser = async (req, res, next) => {
     email: req.body.email,
     password: CryptoJS.AES.encrypt(
       req.body.password,
-      "Secret Passphrase"
+      process.env.BYCRYPT_KEY
     ).toString(),
   });
+  console.log(newUser);
+
   try {
-    const result = await registerSchema.validateAsync(req.body);
-    const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+    await registerSchema.validateAsync(req.body);
+    await newUser.save();
+    res
+      .status(201)
+      .json({ status: "success", message: "succefully registered " });
   } catch (err) {
-    if (err.isJoi === true) err.statusCode = 422;
+    if (err.isJoi === true) err.statusCode = 400;
     next(err);
   }
 };
@@ -55,10 +60,8 @@ const postRegisterUser = async (req, res, next) => {
 /////////  LOGIN   //////////////
 const postLogin = async (req, res, next) => {
   try {
-    const result = await authSchema.validateAsync(req.body);
-    console.log(result);
-    const user = await User.findOne({ username: req.body.username });
-    console.log(user);
+    await authSchema.validateAsync(req.body);
+    const user = await User.findOne({ email: req.body.username });
     !user && res.status(500).json("Wrong credential");
     const hashedPassword = CryptoJS.AES.decrypt(
       user.password,
@@ -74,7 +77,7 @@ const postLogin = async (req, res, next) => {
     const { password, ...others } = user._doc;
     res.status(200).json({ ...others, accessToken });
   } catch (err) {
-    if (err.isJoi === true) err.statusCode = 422;
+    if (err.isJoi === true) err.statusCode = 401;
     next(err);
   }
 };
@@ -120,6 +123,12 @@ const getSpecificUser = async (req, res, next) => {
   }
 };
 
+const CurrentUser = async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(400).json("there is no such user");
+  res.status(200).send(user);
+};
+
 module.exports = {
   getOrderDetails,
   getUser,
@@ -128,4 +137,5 @@ module.exports = {
   postRegisterUser,
   postLogin,
   getSpecificUser,
+  CurrentUser,
 };

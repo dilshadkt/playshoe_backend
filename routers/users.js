@@ -8,7 +8,9 @@ const {
   postRegisterUser,
   postLogin,
   getSpecificUser,
+  CurrentUser,
 } = require("../controller/userController");
+router.get("/me", VerifyToken, CurrentUser);
 router.post("/register", postRegisterUser);
 router.post("/login", postLogin);
 router.get("/", getUsers);

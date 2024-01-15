@@ -86,7 +86,7 @@ const postProduct = async (req, res, next) => {
       image: result.url,
       category: req.body.category,
     });
-    console.log(result.url);
+
     try {
       const savedProduct = await newProduct.save();
       res.status(201).json({
@@ -114,33 +114,26 @@ const deleteProduct = async (req, res, next) => {
 };
 ////////////  POST PRODUCT TO THE CART 🛒🛒🛒  ///////////
 const postToCart = async (req, res, next) => {
-  const userId = req.params.userId;
-  const productId = req.body.productId;
-  const user = await Users.findById(userId);
-  const dublicated = user.cart.filter(
-    (item) => item._id.toString() == productId.toString()
-  );
+  const userId = req.user.id;
 
   try {
-    if (dublicated == "") {
-      const product = await Product.findById(productId);
-      const result = await Users.findByIdAndUpdate(
-        userId,
-        { $push: { cart: product } },
-        { new: true }
-      );
+    const product = await Product.findById(req.body.productId);
+    const result = await Users.findByIdAndUpdate(
+      userId,
+      { $push: { cart: product } },
+      { new: true }
+    );
 
-      await result.save();
-      res.status(200).json(result);
-    }
-  } catch (err) {
-    next(err);
+    await result.save();
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
   }
 };
 ///// GET PRODUCT OF SPECIFIC USER ///////////
-const getCart = async (req, res, next) => {
+const getCartItems = async (req, res, next) => {
   try {
-    const user = req.params.userId;
+    const user = req.user.id;
     const product = await Users.findById(user);
     res.status(200).json(product.cart);
   } catch (err) {
@@ -149,21 +142,16 @@ const getCart = async (req, res, next) => {
 };
 
 ////// REMOVE PRODUCT FROM CART ///////////
-const deleteCart = async (req, res, next) => {
+const deleteCartItem = async (req, res, next) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
     const productId = req.query.productId;
 
     const user = await Users.findById(userId);
-
-    const indexToRemove = user.cart.findIndex(
-      (item) => item._id.toString() === productId
+    const filterdProduct = user.cart.filter(
+      (item) => item._id.toString() !== productId
     );
-    if (indexToRemove === -1) {
-      return { error: "Cart item not found in the user's cart" };
-    }
-    user.cart.splice(indexToRemove, 1);
-
+    user.cart = filterdProduct;
     await user.save();
     res.status(200).json(user);
   } catch (err) {
@@ -224,6 +212,6 @@ module.exports = {
   getCategorizedProduct,
   uploadPrdct,
   postToCart,
-  getCart,
-  deleteCart,
+  getCartItems,
+  deleteCartItem,
 };

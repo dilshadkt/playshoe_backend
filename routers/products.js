@@ -12,21 +12,22 @@ const {
   getCategorizedProduct,
   uploadPrdct,
   postToCart,
-  getCart,
-  deleteCart,
+  getCartItems,
+  deleteCartItem,
 } = require("../controller/ProductCont");
+const { VerifyToken } = require("../middlewares/VerifyToken");
 
 const router = require("express").Router();
 
 router.get("/", getProducts);
+router.get("/cart", VerifyToken, getCartItems);
+router.post("/cart", VerifyToken, postToCart);
+router.delete("/cart", VerifyToken, deleteCartItem);
+router.delete("/", deleteProduct);
 router.post("/upload", multerUploads, uploadPrdct);
 router.get("/:catId", getProduct);
 router.put("/:catId", putProduct);
 router.post("/add/new", multerUploads, postProduct);
 router.delete("/:gender", deleteProduct);
-router.delete("/", deleteProduct);
-router.post("/:userId/cart", postToCart);
-router.get("/:userId/cart", getCart);
-router.delete("/:userId/cart", deleteCart);
 
 module.exports = router;

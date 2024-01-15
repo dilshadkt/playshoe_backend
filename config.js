@@ -1,4 +1,3 @@
-// const cloudinary = require("cloudinary").v2;
 const { uploader, config } = require("cloudinary");
 
 const cloudinaryConfig = (req, res, next) => {
